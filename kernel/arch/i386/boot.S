@@ -2,7 +2,7 @@
 .set FLAGS,    0x00010000
 .set CHECKSUM, -(MAGIC + FLAGS)
 
-.section .multiboot
+.section .multiboot, "a"
 .align 4
 mb_header:
 .long MAGIC
@@ -22,7 +22,7 @@ stack_top:
 .section .text
 .global _start
 _start:
-    movw $0x3f8, %dx              # canal 2: um byte cru na COM1
+    movw $0x3f8, %dx
     movb $'S', %al
     outb %al, %dx
     mov  $stack_top, %esp

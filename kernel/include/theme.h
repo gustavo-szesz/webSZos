@@ -1,0 +1,23 @@
+#ifndef THEME_H
+#define THEME_H
+
+#define SCREEN_W 1024
+#define SCREEN_H 768
+
+#define COL_BG        0x0011111B
+#define COL_BAR       0x00181825
+#define COL_SURFACE   0x001E1E2E
+#define COL_TILE_ACT  0x0024273A
+#define COL_HEADER    0x00313244
+#define COL_GUTTER    0x00181825
+#define COL_ACCENT    0x0089B4FA
+#define COL_MAUVE     0x00CBA6F7
+#define COL_TEAL      0x0094E2D5
+#define COL_GREEN     0x00A6E3A1
+#define COL_YELLOW    0x00F9E2AF
+#define COL_RED       0x00F38BA8
+#define COL_TEXT      0x00CDD6F4
+#define COL_SUBTEXT   0x006C7086
+#define COL_BORDER_IN 0x0045475A
+
+#endif

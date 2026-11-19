@@ -1,65 +1,106 @@
-<!doctype html>
-<meta charset="utf-8">
-<title>WebOS Lab M0</title>
-<button id="start">Start</button>
-<button id="reset">Reset</button>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>WebSZos</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #11111b;
+      overflow: hidden;
+      font-family: monospace;
+    }
+    #screen {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      outline: none;
+    }
+    #screen canvas {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+    #screen > div {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #hud {
+      position: fixed;
+      bottom: 28px;
+      right: 12px;
+      z-index: 10;
+      display: flex;
+      gap: 6px;
+      opacity: 0.35;
+      transition: opacity 0.2s;
+    }
+    #hud:hover { opacity: 1; }
+    #hud button {
+      background: #181825;
+      color: #cdd6f4;
+      border: 1px solid #45475a;
+      padding: 4px 8px;
+      font-family: monospace;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    #hud button:hover { border-color: #89b4fa; color: #89b4fa; }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <button onclick="document.documentElement.requestFullscreen()">[Fullscreen]</button>
+    <button onclick="emu.restart()">[Restart]</button>
+  </div>
+  <div id="screen" tabindex="0">
+    <div></div>
+    <canvas></canvas>
+  </div>
 
-<div id="screen" style="margin:8px 0">
-  <div style="white-space:pre;font:14px monospace;line-height:14px"></div>
-  <canvas style="display:none"></canvas>
-</div>
+  <script src="libv86-debug.js"></script>
+  <script>
+    const emu = new V86({
+      wasm_path: "v86-debug.wasm",
+      memory_size: 32 * 1024 * 1024,
+      vga_memory_size: 8 * 1024 * 1024,
+      bios:      { url: "seabios.bin" },
+      vga_bios:  { url: "vgabios.bin" },
+      multiboot: { url: "kernel.bin?v=" + Date.now() },
+      screen_container: document.getElementById("screen"),
+      autostart: true,
+    });
 
-<pre id="out" style="background:#111;color:#0f0;height:12em;overflow:auto"></pre>
-<input id="cmd" placeholder="ping" disabled>
+    window.addEventListener("load", () => {
+      document.getElementById("screen").focus();
+    });
 
-<script src="libv86-debug.js"></script>
-<script>
-let emu = null;
-const out = document.getElementById("out");
-const cmd = document.getElementById("cmd");
-
-document.getElementById("start").onclick = () => {
-  if (emu) return;
-  emu = new V86({
-    wasm_path: "v86-debug.wasm",
-    memory_size: 32 * 1024 * 1024,
-    bios:      { url: "seabios.bin" },
-    vga_bios:  { url: "vgabios.bin" },
-    multiboot: { url: "kernel.bin" },
-    screen_container: document.getElementById("screen"),
-    autostart: true,
-  });
-  emu.add_listener("emulator-started", () => console.log("v86: started"));
-  emu.add_listener("serial0-output-byte", (b) => {
-    out.textContent += String.fromCharCode(b);
-    out.scrollTop = out.scrollHeight;
-  });
-  cmd.disabled = false;
-};
-
-cmd.onkeydown = (e) => {
-  if (e.key === "Enter") {
-    emu.serial0_send(cmd.value + "\n");
-    cmd.value = "";
-  }
-};
-emu = new V86({
-  wasm_path: "v86-debug.wasm",
-  memory_size: 32 * 1024 * 1024,
-  vga_memory_size: 8 * 1024 * 1024, // <-- Adicione esta linha
-  bios:      { url: "seabios.bin" },
-  vga_bios:  { url: "vgabios.bin" },
-  multiboot: { url: "kernel.bin" },
-  screen_container: document.getElementById("screen"),
-  autostart: true,
-});
-
-
-document.getElementById("reset").onclick = async () => {
-  if (!emu) return;
-  await emu.destroy();
-  emu = null;
-  out.textContent = "";
-  cmd.disabled = true;
-};
-</script>
+    emu.add_listener("serial0-output-byte", (byte) => {
+          if (!window._serBuf) window._serBuf = "";
+          const ch = String.fromCharCode(byte);
+          if (ch === "\n") {
+            const line = window._serBuf.trim();
+            if (line.startsWith("@@SAVE:")) {
+              const rest = line.slice(7);
+              const sep = rest.indexOf(":");
+              const fname = rest.slice(0, sep);
+              const content = rest.slice(sep + 1).replace(/\\n/g, "\n");
+              localStorage.setItem("webszos_file_" + fname, content);
+              console.log("[WebSZos IPC] Saved to localStorage:", fname, "\n" + content);
+            } else if (line.length > 0) {
+              console.log("[WebSZos]", line);
+            }
+            window._serBuf = "";
+          } else {
+            window._serBuf += ch;
+          }
+        });
+  </script>
+</body>
+</html>
