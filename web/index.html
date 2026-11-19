@@ -1,0 +1,65 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>WebOS Lab M0</title>
+<button id="start">Start</button>
+<button id="reset">Reset</button>
+
+<div id="screen" style="margin:8px 0">
+  <div style="white-space:pre;font:14px monospace;line-height:14px"></div>
+  <canvas style="display:none"></canvas>
+</div>
+
+<pre id="out" style="background:#111;color:#0f0;height:12em;overflow:auto"></pre>
+<input id="cmd" placeholder="ping" disabled>
+
+<script src="libv86-debug.js"></script>
+<script>
+let emu = null;
+const out = document.getElementById("out");
+const cmd = document.getElementById("cmd");
+
+document.getElementById("start").onclick = () => {
+  if (emu) return;
+  emu = new V86({
+    wasm_path: "v86-debug.wasm",
+    memory_size: 32 * 1024 * 1024,
+    bios:      { url: "seabios.bin" },
+    vga_bios:  { url: "vgabios.bin" },
+    multiboot: { url: "kernel.bin" },
+    screen_container: document.getElementById("screen"),
+    autostart: true,
+  });
+  emu.add_listener("emulator-started", () => console.log("v86: started"));
+  emu.add_listener("serial0-output-byte", (b) => {
+    out.textContent += String.fromCharCode(b);
+    out.scrollTop = out.scrollHeight;
+  });
+  cmd.disabled = false;
+};
+
+cmd.onkeydown = (e) => {
+  if (e.key === "Enter") {
+    emu.serial0_send(cmd.value + "\n");
+    cmd.value = "";
+  }
+};
+emu = new V86({
+  wasm_path: "v86-debug.wasm",
+  memory_size: 32 * 1024 * 1024,
+  vga_memory_size: 8 * 1024 * 1024, // <-- Adicione esta linha
+  bios:      { url: "seabios.bin" },
+  vga_bios:  { url: "vgabios.bin" },
+  multiboot: { url: "kernel.bin" },
+  screen_container: document.getElementById("screen"),
+  autostart: true,
+});
+
+
+document.getElementById("reset").onclick = async () => {
+  if (!emu) return;
+  await emu.destroy();
+  emu = null;
+  out.textContent = "";
+  cmd.disabled = true;
+};
+</script>
