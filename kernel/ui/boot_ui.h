@@ -13,4 +13,6 @@ void ui_tick_second(u32 uptime_sec);
 u8   ui_get_mod_key(void);
 u8   ui_is_configured(void);
 
+void loop_principal(void);
+
 #endif

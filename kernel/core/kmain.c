@@ -4,7 +4,6 @@
 #include "vbe.h"
 #include "gdt.h"
 #include "idt.h"
-#include "kbd.h"
 #include "boot_ui.h"
 
 void kmain(void) {
@@ -17,12 +16,9 @@ void kmain(void) {
     idt_init();
 
     u32 last_sec = 0;
-    KeyEvent ev;
 
     for (;;) {
-        if (kbd_poll(&ev)) {
-            ui_handle_key(ev);
-        }
+        loop_principal();
 
         u32 now_sec = pit_get_ticks() / 100;
         if (now_sec != last_sec) {
