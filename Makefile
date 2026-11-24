@@ -1,10 +1,10 @@
 CC      ?= i686-elf-gcc
-INC      = -Ikernel/include -Ikernel/arch/i386 -Ikernel/drivers -Ikernel/wm
+INC      = -Ikernel/include -Ikernel/arch/i386 -Ikernel/drivers -Ikernel/ui
 CFLAGS   = -m32 -march=i686 -mno-mmx -mno-sse -mno-sse2 -ffreestanding -fno-pie -fno-stack-protector -O2 -Wall -Wextra $(INC)
 LDFLAGS  = -m32 -nostdlib -T kernel/linker.ld -Wl,--build-id=none -no-pie
 
-ASM_SRC  = kernel/arch/i386/boot.S
-C_SRC    = $(wildcard kernel/core/*.c kernel/drivers/*.c kernel/wm/*.c)
+ASM_SRC  = $(wildcard kernel/arch/i386/*.S)
+C_SRC    = $(wildcard kernel/core/*.c kernel/drivers/*.c kernel/ui/*.c kernel/arch/i386/*.c)
 OBJ      = $(ASM_SRC:.S=.o) $(C_SRC:.c=.o)
 
 all: web/kernel.bin

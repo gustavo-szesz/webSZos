@@ -69,7 +69,7 @@
     const emu = new V86({
       wasm_path: "v86-debug.wasm",
       memory_size: 32 * 1024 * 1024,
-      vga_memory_size: 8 * 1024 * 1024,
+      vga_memory_size: 16 * 1024 * 1024,
       bios:      { url: "seabios.bin" },
       vga_bios:  { url: "vgabios.bin" },
       multiboot: { url: "kernel.bin?v=" + Date.now() },

@@ -1,14 +1,19 @@
 CC      ?= i686-elf-gcc
-CFLAGS   = -m32 -march=i686 -mno-mmx -mno-sse -mno-sse2 -ffreestanding -fno-pie -fno-stack-protector -O2 -Wall -Wextra
-LDFLAGS  = -m32 -nostdlib -T linker.ld -Wl,--build-id=none -no-pie
+INC      = -Ikernel/include -Ikernel/arch/i386 -Ikernel/drivers -Ikernel/wm -Ikernel/fs
+CFLAGS   = -m32 -march=i686 -mno-mmx -mno-sse -mno-sse2 -ffreestanding -fno-pie -fno-stack-protector -O2 -Wall -Wextra $(INC)
+LDFLAGS  = -m32 -nostdlib -T kernel/linker.ld -Wl,--build-id=none -no-pie
 
-all: kernel.bin
+ASM_SRC  = $(wildcard kernel/arch/i386/*.S)
+C_SRC    = $(wildcard kernel/core/*.c kernel/drivers/*.c kernel/wm/*.c kernel/fs/*.c kernel/arch/i386/*.c)
+OBJ      = $(ASM_SRC:.S=.o) $(C_SRC:.c=.o)
 
-kernel.elf: boot.o kernel.o linker.ld
-	$(CC) $(LDFLAGS) -o $@ boot.o kernel.o
+all: web/kernel.bin
 
-kernel.bin: kernel.elf
-	objcopy -O binary kernel.elf kernel.bin
+kernel/kernel.elf: $(OBJ) kernel/linker.ld
+	$(CC) $(LDFLAGS) -o $@ $(OBJ)
+
+web/kernel.bin: kernel/kernel.elf
+	objcopy -O binary $< $@
 
 %.o: %.S
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -16,5 +21,8 @@ kernel.bin: kernel.elf
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+run: all
+	cd web && python3 -m http.server 8001
+
 clean:
-	rm -f *.o kernel.elf kernel.bin
+	rm -f $(OBJ) kernel/kernel.elf web/kernel.bin
