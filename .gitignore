@@ -1,0 +1,4 @@
+*.o
+kernel/kernel.elf
+web/node_modules/
+kernel.zip
